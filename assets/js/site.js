@@ -70,6 +70,121 @@
     });
   }
 
+  // Web call: talk to Maya in the browser. Retell's files load only when the visitor starts a call.
+  var wc = document.getElementById('webcall');
+  if (wc && wc.showModal) {
+    var wcCall = null, wcClient = null, wcLibs = null, wcTimer = null, wcStarted = 0, wcBusy = false;
+    var wcMax = (parseInt(wc.getAttribute('data-max'), 10) || 10) * 60;
+    var $ = function (sel) { return wc.querySelector(sel); };
+    var show = function (step) {
+      ['intro', 'live', 'done'].forEach(function (s) { $('[data-wc-step="' + s + '"]').hidden = s !== step; });
+      wc.classList.remove('is-live');
+    };
+    var loadLibs = function () {
+      if (wcLibs) return wcLibs;
+      wcLibs = wc.getAttribute('data-libs').split(',').reduce(function (chain, src) {
+        return chain.then(function () {
+          return new Promise(function (ok, fail) {
+            var s = document.createElement('script');
+            s.src = src; s.onload = ok; s.onerror = function () { fail(new Error('load')); };
+            document.head.appendChild(s);
+          }).then(function () {
+            // Retell's file looks for these two names.
+            if (window.EventEmitter3 && !window.eventemitter3) window.eventemitter3 = window.EventEmitter3;
+            if (window.LivekitClient && !window.livekitClient) window.livekitClient = window.LivekitClient;
+          });
+        });
+      }, Promise.resolve());
+      wcLibs.catch(function () { wcLibs = null; });
+      return wcLibs;
+    };
+    var stopClock = function () { if (wcTimer) { clearInterval(wcTimer); wcTimer = null; } };
+    var finish = function (message) {
+      if (!wcCall && !wcBusy) return;
+      var secs = wcStarted ? Math.round((Date.now() - wcStarted) / 1000) : 0;
+      stopClock(); wcCall = null; wcBusy = false; wcStarted = 0;
+      $('[data-wc-done]').innerHTML = message || 'The call has ended. Thank you for speaking to Maya.';
+      show('done');
+      track('web_call_ended', { seconds: secs });
+    };
+    var callInstead = ' You can also call <a href="tel:+441218190003">0121 819 0003</a>.';
+    var start = function () {
+      if (wcBusy || wcCall) return;
+      wcBusy = true;
+      show('live');
+      $('[data-wc-status]').textContent = 'Connecting…';
+      $('[data-wc-hint]').textContent = 'Please allow the microphone if your browser asks.';
+      $('[data-wc-time]').textContent = '0:00';
+      $('[data-wc-mute]').setAttribute('aria-pressed', 'false');
+      $('[data-wc-mute]').textContent = 'Mute';
+      if (!navigator.mediaDevices || !window.isSecureContext) {
+        finish('Sorry, this browser cannot make a web call.' + callInstead);
+        return;
+      }
+      track('web_call_started', {});
+      loadLibs().then(function () {
+        if (!wcBusy) return;                       // closed while loading
+        var sdk = window.retellClientJsSdk;
+        wcClient = wcClient || new sdk.RetellClient({ key: wc.getAttribute('data-key') });
+        var failed = false;
+        wcCall = wcClient.createWebCall({
+          agent_id: wc.getAttribute('data-agent'),
+          metadata: { source: 'website', page: location.pathname },
+          hooks: {
+            onStatus: function (status) {
+              if (status === 'live') {
+                wcStarted = Date.now();
+                wc.classList.add('is-live');
+                $('[data-wc-status]').textContent = 'You are connected to Maya';
+                $('[data-wc-hint]').textContent = 'Speak normally. Press End call when you have finished.';
+                stopClock();
+                wcTimer = setInterval(function () {
+                  var s = Math.round((Date.now() - wcStarted) / 1000);
+                  $('[data-wc-time]').textContent = Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2);
+                  if (s >= wcMax && wcCall) wcCall.end();
+                }, 1000);
+              }
+            },
+            onError: function (err) {
+              failed = true;
+              var text = String((err && (err.name + ' ' + err.message)) || '').toLowerCase();
+              var mic = /notallowed|permission|denied|notfound|microphone|device/.test(text);
+              finish((mic ? 'We could not use your microphone. Please allow it in your browser and try again.'
+                          : 'Sorry, the call could not be connected.') + callInstead);
+            },
+            onEnd: function () { if (!failed) finish(); }
+          }
+        });
+      }).catch(function () {
+        finish('Sorry, the call could not be started.' + callInstead);
+      });
+    };
+    var hangUp = function () {
+      var c = wcCall;
+      if (c && c.end) { try { Promise.resolve(c.end()).catch(function () {}); } catch (e) {} }
+      if (wcBusy || wcCall) finish();
+    };
+    document.querySelectorAll('[data-webcall]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        track('web_call_cta_click', { location: b.getAttribute('data-cta') || '' });
+        if (!wcCall && !wcBusy) show('intro');
+        wc.showModal();
+      });
+    });
+    wc.querySelectorAll('[data-wc-start]').forEach(function (b) { b.addEventListener('click', start); });
+    $('[data-wc-end]').addEventListener('click', hangUp);
+    $('[data-wc-mute]').addEventListener('click', function () {
+      if (!wcCall) return;
+      var on = this.getAttribute('aria-pressed') !== 'true';
+      try { if (on) wcCall.mute(); else wcCall.unmute(); } catch (e) { return; }
+      this.setAttribute('aria-pressed', on ? 'true' : 'false');
+      this.textContent = on ? 'Unmute' : 'Mute';
+    });
+    $('[data-wc-close]').addEventListener('click', function () { wc.close(); });
+    wc.addEventListener('close', function () { if (wcCall || wcBusy) { hangUp(); show('intro'); } });
+    window.addEventListener('pagehide', function () { if (wcCall && wcCall.end) { try { wcCall.end(); } catch (e) {} } });
+  }
+
   // Enquiry form
   var form = document.getElementById('enquiry');
   if (form) {

@@ -28,7 +28,7 @@
 <link rel="apple-touch-icon" href="../assets/img/apple-touch-icon.png">
 <link rel="preload" href="../assets/fonts/inter-latin-var.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="../assets/fonts/manrope-latin-var.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="../assets/css/site.css?v=e4d85e5d">
+<link rel="stylesheet" href="../assets/css/site.css?v=773bebca">
 <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://mission4ai.com/#organization","name":"Mission4AI","legalName":"@4 A Mission Ltd","url":"https://mission4ai.com/","logo":"https://mission4ai.com/assets/img/logo-512.png","email":"info@mission4ai.com","telephone":"+441218190003","address":{"@type":"PostalAddress","streetAddress":"Radclyffe House, 66-68 Hagley Road","addressLocality":"Birmingham","postalCode":"B16 8PF","addressCountry":"GB"},"contactPoint":{"@type":"ContactPoint","telephone":"+441218190003","contactType":"sales","areaServed":"GB","availableLanguage":"en"}},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://mission4ai.com/"},{"@type":"ListItem","position":2,"name":"About Us","item":"https://mission4ai.com/about/"}]}]}</script>
 </head>
 <body>
@@ -54,5 +54,23 @@
   <div class="wrap fine">Mission4AI is the trading name of @4 A Mission Ltd. Registered in England and Wales. Company No. 14218216. © 2026 Mission4AI. All rights reserved.</div>
 </footer>
 <div class="mobilebar"><a class="btn" href="tel:+441218190003" data-cta="mobile-bar">Call Maya</a><a class="btn light" href="../contact/" data-booking data-cta="mobile-bar">Book demo</a></div>
-<script src="../assets/js/site.js?v=e4d85e5d" defer></script>
+<dialog id="webcall" class="webcall" aria-labelledby="webcallheading" data-key="public_key_d3bf542902992ff38af83" data-agent="agent_c120fa5230c04d2933248b4737" data-libs="../assets/vendor/eventemitter3-5.0.4.umd.min.js,../assets/vendor/livekit-client-2.25.0.umd.js,../assets/vendor/retell-client-3.0.4.umd.js" data-max="10">
+  <button class="close" type="button" data-wc-close>Close</button>
+  <h2 class="h3" id="webcallheading">Talk to Maya online</h2>
+  <div data-wc-step="intro">
+    <p>Speak to Maya, our AI receptionist, through your computer or phone, with no number to dial. She can answer your questions, connect you to a live industry demo and book a discovery call.</p>
+    <p class="small">Your browser will ask to use your microphone. Maya is an AI assistant and the call is recorded. See our <a href="../privacy-policy/">Privacy Policy</a>.</p>
+    <div class="actions"><button class="btn" type="button" data-wc-start>Start the call</button><a class="btn light" href="tel:+441218190003" data-cta="webcall-dialog">Call 0121 819 0003 instead</a></div>
+  </div>
+  <div data-wc-step="live" hidden>
+    <div class="wc-state"><span class="wc-dot" aria-hidden="true"></span><strong data-wc-status role="status" aria-live="polite">Connecting…</strong><span class="wc-time" data-wc-time aria-hidden="true">0:00</span></div>
+    <p class="small" data-wc-hint>Please allow the microphone if your browser asks.</p>
+    <div class="actions"><button class="btn light" type="button" data-wc-mute aria-pressed="false">Mute</button><button class="btn wc-end" type="button" data-wc-end>End call</button></div>
+  </div>
+  <div data-wc-step="done" hidden>
+    <p data-wc-done role="status">The call has ended. Thank you for speaking to Maya.</p>
+    <div class="actions"><button class="btn" type="button" data-wc-start>Call again</button><a class="btn light" href="../contact/" data-booking data-cta="webcall-done">Contact us</a></div>
+  </div>
+</dialog>
+<script src="../assets/js/site.js?v=773bebca" defer></script>
 </body></html>
