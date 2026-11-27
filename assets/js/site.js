@@ -30,7 +30,7 @@
   // Click tracking: calls, demo buttons, booking buttons
   document.addEventListener('click', function (e) {
     var a = e.target.closest && e.target.closest('a');
-    if (!a) return;
+    if (!a || a.hasAttribute('data-book')) return;
     var where = a.getAttribute('data-cta') || '';
     var href = a.getAttribute('href') || '';
     if (href.indexOf('tel:') === 0) {
